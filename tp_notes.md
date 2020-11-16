@@ -1,6 +1,87 @@
-# TP hadooop
+# TP hadoop
+
+
+Ci-dessous mes réponses Au TP Haddop ainsi que le code et les résultats obtenus.
+
+Ce document est aussi,pour moi, une aide mémoire.
+les sources ainsi que les commandes sont accessibles sur  https://github.com/cecileDo/TPHadoop
+
+## 2 Premier contact : wordcount
+
+***Pour démarrer vous allez écrire un programme permettant de compter les mots d’un fichier, comme
+nous l’avons vu en cours. Vous écrirez deux programmes Python, un pour la phase Map et un autre
+pour la phase Reduce. Écrivez et testez les d’abord en local sur votre machine avant de les exécuter
+sur le cluster Hadoop. Pour cela vous n’avez pas besoin d’installer autre chose que Python. Vous
+devez vous assurer que la sortie du mapper est une suite de lignes contenant un couple (clé, valeur),
+le séparateur entre les deux étant le caractère de tabulation.***
+
+### 2.1 Écriture du mapper
+
+***Dans cette partie vous devez écrire un programme Python mapper.py qui prend en entrée un fichier
+texte et affiche en sortie chaque mot du fichier avec la valeur 1.***
+```python3 
+import os
+import sys
+
+def mapper_file(afile):
+    assert(os.path.isfile(afile)), "CSV file %s doesnt exist"%afile
+    with open(afile, 'r') as f:
+        return mapper(f)
+
+def mapper(lines):
+    lst=""
+    for line in lines:
+        line = line.strip().split(" ")
+        lst= lst+mapper_line(line)
+    return lst.strip()
+
+def mapper_line(line):
+    return  ('\t1\n'.join(line)+'\t1\n')
+
+if __name__ == "__main__":
+    #print (mapper_file("data.txt") )
+    print (mapper(sys.stdin) )
+
+```
+### 2.2 Écriture du reducer
+
+***Vous devez maintenant écrire le reducer, le programme Python reducer.py qui va prendre en entrée
+la sortie du mapper et afficher en sortie chaque mot avec son nombre d’occurences. Pour le fichier
+exemple précédent il affichera :***
+a 2
+b 1
+c 1
+
+```python3 mapper.py
+#!/usr/bin/env python
+
+import os
+import sys
+
+def mapper_file(afile):
+    assert(os.path.isfile(afile)), "CSV file %s doesnt exist"%afile
+    with open(afile, 'r') as f:
+        return mapper(f)
+
+def mapper(lines):
+    lst=""
+    for line in lines:
+        line = line.strip().split(" ")
+        lst= lst+mapper_line(line)
+    return lst.strip()
+
+def mapper_line(line):
+    return  ('\t1\n'.join(line)+'\t1\n')
+
+if __name__ == "__main__":
+    #print (mapper_file("data.txt") )
+    print (mapper(sys.stdin) )
+
+```
 
 ### 3.1 HDFS
+
+```bash
 boukamec@im2ag-hadoop-01:~$ hdfs dfs \\
 Usage: hadoop fs [generic options] \\
 	[-appendToFile <localsrc> ... <dst>] \\
@@ -163,8 +244,10 @@ Found 2 items
 correspond-il ?***
 le nombre de packets de 64MB nécessaires a stocker les données
 2020-10-11 15:56:11,599 INFO mapreduce.JobSubmitter: number of splits:3
+```
 
-Où sont les résultats du job Hadoop ?
+***Où sont les résultats du job Hadoop ?***
+
 dans le ~/wc (repertoire donné en paramètre du --output)
 
 ### 3.3 Ajout d’un combiner
@@ -175,6 +258,7 @@ combiner.py doit prendre en entrée des liste key avec liste de valeur et les so
 
 c'est le même code que le reducer mais en sommant les valeurs à l'interieur d'un clister
 
+```
 oukamec@im2ag-hadoop-01:~/tp_mapReduce$ hadoop jar /usr/local/hadoop/share/hadoop/tools/lib/hadoop-streaming-3.1.2.jar -files mapper.py,reducer.py,combiner.py -mapper ma
 pper.py -combiner combiner.py -reducer reducer.py -input /data/miserables -output wc
 packageJobJar: [/tmp/hadoop-unjar6348337114372431690/] [] /tmp/streamjob5450684265884880911.jar tmpDir=null
@@ -259,9 +343,10 @@ packageJobJar: [/tmp/hadoop-unjar6348337114372431690/] [] /tmp/streamjob54506842
 	File Output Format Counters
 		Bytes Written=676452
 2020-10-11 17:30:00,849 INFO streaming.StreamJob: Output directory: wc
-
+```
 ## 3.4 Plusieurs reducers
 
+```bash
 hadoop jar /usr/local/hadoop/share/hadoop/tools/lib/hadoop-streaming-3.1.2.jar -files mapper.py,reducer.py -mapper mapper.py -reducer reducer.py -numReduceTasks 3 -input /data/miserables -output wc
 
 packageJobJar: [/tmp/hadoop-unjar3312545640244393523/] [] /tmp/streamjob9071507183851081788.jar tmpDir=null
@@ -347,25 +432,421 @@ packageJobJar: [/tmp/hadoop-unjar3312545640244393523/] [] /tmp/streamjob90715071
 	File Output Format Counters 
 		Bytes Written=739375
 2020-10-12 15:09:20,682 INFO streaming.StreamJob: Output directory: wc
+```
 
+***Question Comment se présente le résultat ? Pourquoi ?***
 
-** Question Comment se présente le résultat ? Pourquoi ? ***
 sous forme de 3 fichiers part-00000 part-00001 part-00002
 ce sont les sorties des Reducers 
 
 # 4 Top-tags Flickr par pays
 
-*** Dans la suite de ce TP vous allez étudier des méta-données de photos stockées dans un jeu de
-données de Flickr. À chaque photo est associé par l’utilisateur un ensemble de tags ainsi que les
-coordonnées GPS où la photo a été prise. Le but sera de trouver à partir de ces données pour
-chaque pays quels sont les tags les plus fréquents.
-Dans l’archive que vous avez téléchargée se trouvent trois fichiers :
-• flickrSpecs.txt contient le format du fichier de données.
-• flickrSample.txt contient un extrait du fichier de données que vous pouvez utiliser pour vos
+***Dans la suite de ce TP vous allez étudier des méta-données de photos stockées dans un jeu de données de Flickr. À chaque photo est associé par l’utilisateur un ensemble de tags ainsi que les
+coordonnées GPS où la photo a été prise. Le but sera de trouver à partir de ces données pour chaque pays quels sont les tags les plus fréquents.
+Dans l’archive que vous avez téléchargée se trouvent trois fichiers :***
+
+* flickrSpecs.txt contient le format du fichier de données.
+* flickrSample.txt contient un extrait du fichier de données que vous pouvez utiliser pour vos
 test locaux.
-• country.py qui contient le code de la fonction getCountryAt qui prend en paramètres une
+* country.py qui contient le code de la fonction getCountryAt qui prend en paramètres une
 latitude et une longitude et renvoie le code du pays de cette coordonnée. N’oubliez pas
-d’appeler la fonction init_pays avant de l’appeler la première fois. ***
+d’appeler la fonction init_pays avant de l’appeler la première fois.
 
 
-\end{document}
+## 4.1 Map et Reduce
+***On veut trouver les K tags les plus utilisés par pays, une bonne clé intermédiaire entre le mapper et
+le reducer semble donc être le code du pays sur 2 caractères retourné par la fonction getCountryAt
+fournie.
+Dans le reducer il faudra utiliser une structure de données stockant l’ensemble des tags et leur
+nombre d’occurence pour ensuite en extraire les plus fréquents.
+Écrivez le programme map/reduce réalisant ce traitement. Testez-le localement puis sur le cluster***
+
+mapper_flikr.py
+```python3
+#!/usr/bin/env python
+
+import os
+import sys
+import country
+
+longitude_field = 10
+latitude_field = 11
+tags_field = 8
+
+def mapper_file(afile):
+    assert(os.path.isfile(afile)), "CSV file %s doesnt exist"%afile
+    with open(afile, 'r') as f:
+        return mapper(f)
+
+def mapper(lines):
+    country.init_pays()
+    lst=""
+    for line in lines:
+        line = line.strip().split("\t")
+        #print( line)
+        lst= lst+mapper_line(line)
+    return lst.strip()
+
+def mapper_line(line):
+    res ="" 
+    contry_id = country.getCountryAt(float(line[latitude_field]), float(line[longitude_field]))
+    if contry_id == "":
+        #print ("No country for ",float(line[latitude_field]), float(line[longitude_field]))
+        return ""
+    for tag in line[tags_field].split(","): 
+        #print("Tag : " , tag)
+        res+= contry_id+ "\t"+ tag + "\n"
+    return  res
+
+if __name__ == "__main__":
+    #print (mapper_file("flickrSample.txt") )
+    print (mapper(sys.stdin) )
+
+```
+
+reducer.py 
+```python3
+#!/usr/bin/env python
+
+import os
+import sys
+import json
+k=4
+def reducer_file(afile):
+    assert(os.path.isfile(afile)), "file %s doesnt exist"%afile
+    with open(afile, 'r') as f:
+        return reducer(f)
+
+
+def get_list_best_tag_by_country (data_dict):
+    """
+    take a list of tag by contry return only k best tags by contry
+    """
+    res_dict = dict()
+    for  country, tags in data_dict.items():
+        # get all tag for contry 
+        lst_tag = list(dict.fromkeys(tags))
+        nb_val_tag = [None] * len(lst_tag)
+        for i in range(len(lst_tag)):
+            nb_val_tag[i]=tags.count(lst_tag[i])
+        sorted_lst_tag = [x for _,x in sorted(zip(nb_val_tag,lst_tag), reverse=True)]
+        #take k first one 
+        res_dict[country] = ' '.join(sorted_lst_tag[:4])
+    return res_dict
+   
+
+def get_list_tag_by_country(data):
+    """
+    for each contry build list of tag 
+    """
+    data_dict = dict()
+    for line in data:
+        if line.strip():
+            line = line.strip().split('\t')
+            # line contain country tag values
+            if len(line) == 2:
+                # create a dict of list of tag
+                country = line[0]
+                if country in data_dict:
+                    data_dict[country].append(line[1])
+                else: 
+                    data_dict[country] = [line[1]]
+    return data_dict
+
+def reducer(data):
+    data_dict = get_list_tag_by_country(data)
+    res_dict = get_list_best_tag_by_country(data_dict)
+    return '\n'.join(["\t".join([key, str(val)]) for key, val in res_dict.items()])
+
+
+if __name__ == "__main__":
+    print(reducer(sys.stdin) )
+    #print(reducer_file("out_mapper_flickr.txt"))
+    
+```
+Résultat sur un exemple:
+
+```bash
+./mapper_flikr.py < /data/flicksample | sort | ./reducer_flickr.py
+
+boukamec@im2ag-hadoop-01:~/tp_hadoop$ ./mapper_flikr.py < flickrSample.txt | sort | ./reducer_flickr.py
+ML	mali niger viajes rio+niger
+BN	ghana lab idds africa
+UV	africa burkina-faso burkina+faso afrique
+AG	hoggar amazigh+culture algeria alger
+```
+
+Résultat sur le framework: une erreur que je ne parvient pas a corriger
+```
+hadoop jar /usr/local/hadoop/share/hadoop/tools/lib/hadoop-streaming-3.1.2.jar -files mapper_flikr.py,reducer_flickr.py  \
+-mapper mapper_flikr.py -reducer reducer_flickr.py -input /data/flicksample -output wcflic
+
+packageJobJar: [/tmp/hadoop-unjar1286712561916788346/] [] /tmp/streamjob3682171857042016209.jar tmpDir=null
+2020-11-16 16:01:04,045 INFO client.RMProxy: Connecting to ResourceManager at /152.77.81.30:8032
+2020-11-16 16:01:04,226 INFO client.RMProxy: Connecting to ResourceManager at /152.77.81.30:8032
+2020-11-16 16:01:04,488 INFO mapreduce.JobResourceUploader: Disabling Erasure Coding for path: /tmp/hadoop-yarn/staging/boukamec/.staging/job_1605490088936_0045
+2020-11-16 16:01:05,241 INFO mapred.FileInputFormat: Total input files to process : 1
+2020-11-16 16:01:05,327 WARN hdfs.DataStreamer: Caught exception
+java.lang.InterruptedException
+	at java.lang.Object.wait(Native Method)
+	at java.lang.Thread.join(Thread.java:1252)
+	at java.lang.Thread.join(Thread.java:1326)
+	at org.apache.hadoop.hdfs.DataStreamer.closeResponder(DataStreamer.java:986)
+	at org.apache.hadoop.hdfs.DataStreamer.endBlock(DataStreamer.java:640)
+	at org.apache.hadoop.hdfs.DataStreamer.run(DataStreamer.java:810)
+2020-11-16 16:01:05,378 INFO mapreduce.JobSubmitter: number of splits:2
+2020-11-16 16:01:05,550 INFO mapreduce.JobSubmitter: Submitting tokens for job: job_1605490088936_0045
+2020-11-16 16:01:05,551 INFO mapreduce.JobSubmitter: Executing with tokens: []
+2020-11-16 16:01:05,750 INFO conf.Configuration: resource-types.xml not found
+2020-11-16 16:01:05,751 INFO resource.ResourceUtils: Unable to find 'resource-types.xml'.
+2020-11-16 16:01:05,810 INFO impl.YarnClientImpl: Submitted application application_1605490088936_0045
+2020-11-16 16:01:05,844 INFO mapreduce.Job: The url to track the job: http://im2ag-hadoop-01.u-ga.fr:8088/proxy/application_1605490088936_0045/
+2020-11-16 16:01:05,845 INFO mapreduce.Job: Running job: job_1605490088936_0045
+2020-11-16 16:01:11,945 INFO mapreduce.Job: Job job_1605490088936_0045 running in uber mode : false
+2020-11-16 16:01:11,946 INFO mapreduce.Job:  map 0% reduce 0%
+2020-11-16 16:01:17,008 INFO mapreduce.Job: Task Id : attempt_1605490088936_0045_m_000000_0, Status : FAILED
+Error: java.lang.RuntimeException: PipeMapRed.waitOutputThreads(): subprocess failed with code 1
+	at org.apache.hadoop.streaming.PipeMapRed.waitOutputThreads(PipeMapRed.java:325)
+	at org.apache.hadoop.streaming.PipeMapRed.mapRedFinished(PipeMapRed.java:538)
+	at org.apache.hadoop.streaming.PipeMapper.close(PipeMapper.java:130)
+	at org.apache.hadoop.mapred.MapRunner.run(MapRunner.java:61)
+	at org.apache.hadoop.streaming.PipeMapRunner.run(PipeMapRunner.java:34)
+	at org.apache.hadoop.mapred.MapTask.runOldMapper(MapTask.java:465)
+	at org.apache.hadoop.mapred.MapTask.run(MapTask.java:349)
+	at org.apache.hadoop.mapred.YarnChild$2.run(YarnChild.java:174)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at javax.security.auth.Subject.doAs(Subject.java:422)
+	at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1729)
+	at org.apache.hadoop.mapred.YarnChild.main(YarnChild.java:168)
+
+2020-11-16 16:01:17,023 INFO mapreduce.Job: Task Id : attempt_1605490088936_0045_m_000001_0, Status : FAILED
+Error: java.lang.RuntimeException: PipeMapRed.waitOutputThreads(): subprocess failed with code 1
+	at org.apache.hadoop.streaming.PipeMapRed.waitOutputThreads(PipeMapRed.java:325)
+	at org.apache.hadoop.streaming.PipeMapRed.mapRedFinished(PipeMapRed.java:538)
+	at org.apache.hadoop.streaming.PipeMapper.close(PipeMapper.java:130)
+	at org.apache.hadoop.mapred.MapRunner.run(MapRunner.java:61)
+	at org.apache.hadoop.streaming.PipeMapRunner.run(PipeMapRunner.java:34)
+	at org.apache.hadoop.mapred.MapTask.runOldMapper(MapTask.java:465)
+	at org.apache.hadoop.mapred.MapTask.run(MapTask.java:349)
+	at org.apache.hadoop.mapred.YarnChild$2.run(YarnChild.java:174)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at javax.security.auth.Subject.doAs(Subject.java:422)
+	at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1729)
+	at org.apache.hadoop.mapred.YarnChild.main(YarnChild.java:168)
+
+2020-11-16 16:01:21,057 INFO mapreduce.Job: Task Id : attempt_1605490088936_0045_m_000001_1, Status : FAILED
+Error: java.lang.RuntimeException: PipeMapRed.waitOutputThreads(): subprocess failed with code 1
+	at org.apache.hadoop.streaming.PipeMapRed.waitOutputThreads(PipeMapRed.java:325)
+	at org.apache.hadoop.streaming.PipeMapRed.mapRedFinished(PipeMapRed.java:538)
+	at org.apache.hadoop.streaming.PipeMapper.close(PipeMapper.java:130)
+	at org.apache.hadoop.mapred.MapRunner.run(MapRunner.java:61)
+	at org.apache.hadoop.streaming.PipeMapRunner.run(PipeMapRunner.java:34)
+	at org.apache.hadoop.mapred.MapTask.runOldMapper(MapTask.java:465)
+	at org.apache.hadoop.mapred.MapTask.run(MapTask.java:349)
+	at org.apache.hadoop.mapred.YarnChild$2.run(YarnChild.java:174)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at javax.security.auth.Subject.doAs(Subject.java:422)
+	at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1729)
+	at org.apache.hadoop.mapred.YarnChild.main(YarnChild.java:168)
+
+2020-11-16 16:01:22,064 INFO mapreduce.Job: Task Id : attempt_1605490088936_0045_m_000000_1, Status : FAILED
+Error: java.lang.RuntimeException: PipeMapRed.waitOutputThreads(): subprocess failed with code 1
+	at org.apache.hadoop.streaming.PipeMapRed.waitOutputThreads(PipeMapRed.java:325)
+	at org.apache.hadoop.streaming.PipeMapRed.mapRedFinished(PipeMapRed.java:538)
+	at org.apache.hadoop.streaming.PipeMapper.close(PipeMapper.java:130)
+	at org.apache.hadoop.mapred.MapRunner.run(MapRunner.java:61)
+	at org.apache.hadoop.streaming.PipeMapRunner.run(PipeMapRunner.java:34)
+	at org.apache.hadoop.mapred.MapTask.runOldMapper(MapTask.java:465)
+	at org.apache.hadoop.mapred.MapTask.run(MapTask.java:349)
+	at org.apache.hadoop.mapred.YarnChild$2.run(YarnChild.java:174)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at javax.security.auth.Subject.doAs(Subject.java:422)
+	at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1729)
+	at org.apache.hadoop.mapred.YarnChild.main(YarnChild.java:168)
+
+2020-11-16 16:01:26,088 INFO mapreduce.Job: Task Id : attempt_1605490088936_0045_m_000001_2, Status : FAILED
+Error: java.lang.RuntimeException: PipeMapRed.waitOutputThreads(): subprocess failed with code 1
+	at org.apache.hadoop.streaming.PipeMapRed.waitOutputThreads(PipeMapRed.java:325)
+	at org.apache.hadoop.streaming.PipeMapRed.mapRedFinished(PipeMapRed.java:538)
+	at org.apache.hadoop.streaming.PipeMapper.close(PipeMapper.java:130)
+	at org.apache.hadoop.mapred.MapRunner.run(MapRunner.java:61)
+	at org.apache.hadoop.streaming.PipeMapRunner.run(PipeMapRunner.java:34)
+	at org.apache.hadoop.mapred.MapTask.runOldMapper(MapTask.java:465)
+	at org.apache.hadoop.mapred.MapTask.run(MapTask.java:349)
+	at org.apache.hadoop.mapred.YarnChild$2.run(YarnChild.java:174)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at javax.security.auth.Subject.doAs(Subject.java:422)
+	at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1729)
+	at org.apache.hadoop.mapred.YarnChild.main(YarnChild.java:168)
+
+2020-11-16 16:01:26,090 INFO mapreduce.Job: Task Id : attempt_1605490088936_0045_m_000000_2, Status : FAILED
+Error: java.lang.RuntimeException: PipeMapRed.waitOutputThreads(): subprocess failed with code 1
+	at org.apache.hadoop.streaming.PipeMapRed.waitOutputThreads(PipeMapRed.java:325)
+	at org.apache.hadoop.streaming.PipeMapRed.mapRedFinished(PipeMapRed.java:538)
+	at org.apache.hadoop.streaming.PipeMapper.close(PipeMapper.java:130)
+	at org.apache.hadoop.mapred.MapRunner.run(MapRunner.java:61)
+	at org.apache.hadoop.streaming.PipeMapRunner.run(PipeMapRunner.java:34)
+	at org.apache.hadoop.mapred.MapTask.runOldMapper(MapTask.java:465)
+	at org.apache.hadoop.mapred.MapTask.run(MapTask.java:349)
+	at org.apache.hadoop.mapred.YarnChild$2.run(YarnChild.java:174)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at javax.security.auth.Subject.doAs(Subject.java:422)
+	at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1729)
+	at org.apache.hadoop.mapred.YarnChild.main(YarnChild.java:168)
+
+2020-11-16 16:01:32,126 INFO mapreduce.Job:  map 100% reduce 100%
+2020-11-16 16:01:32,132 INFO mapreduce.Job: Job job_1605490088936_0045 failed with state FAILED due to: Task failed task_1605490088936_0045_m_000001
+Job failed as tasks failed. failedMaps:1 failedReduces:0 killedMaps:0 killedReduces: 0
+
+2020-11-16 16:01:32,217 INFO mapreduce.Job: Counters: 14
+	Job Counters 
+		Failed map tasks=7
+		Killed map tasks=1
+		Killed reduce tasks=1
+		Launched map tasks=8
+		Other local map tasks=6
+		Rack-local map tasks=2
+		Total time spent by all maps in occupied slots (ms)=24705
+		Total time spent by all reduces in occupied slots (ms)=0
+		Total time spent by all map tasks (ms)=24705
+		Total vcore-milliseconds taken by all map tasks=24705
+		Total megabyte-milliseconds taken by all map tasks=49410000
+	Map-Reduce Framework
+		CPU time spent (ms)=0
+		Physical memory (bytes) snapshot=0
+		Virtual memory (bytes) snapshot=0
+2020-11-16 16:01:32,218 ERROR streaming.StreamJob: Job not successful!
+Streaming Command Failed!
+
+```
+
+
+## 4.2 Combiner
+***Pouvez-vous utiliser directement le reducer de la question précédente comme combiner ? Pourquoi
+?***
+On ne peut pas utiliser le reducer pour deux raisons:
+* la sortie du réducer n'est pas de type cle valeur , mais cle liste de valeur, il faut pouvoir les grouper
+* la sortie du réducer renvoye les k meilleurs et comme le combiner est lancé sur chaque noeud mapper, celui-ci reverrait les k meilleurs localement sur le résultat d'un mapper. Ce résultat ne correspondrait pas au résultat attendu.
+
+***Réfléchissez à l’entrée et à la sortie du combiner. Écrivez le combiner et modifiez le reducer de la
+question précédente pour que le résultat soit correct.***
+
+Assumont que chaque mapper revoie une liste cle, valeur : <pays,hashtag>
+Le combiner construit une cle, valeur de type <pays, listhashtag> avec listhashtag (hashtag1,hashtag2..)
+Le reducer construit une liste de l'ensemble des hashtags en sortie des réducer
+combiner_flick.py
+```python
+#!/usr/bin/env python
+
+import os
+import sys
+import json
+k=4
+def combiner_file(afile):
+    assert(os.path.isfile(afile)), "file %s doesnt exist"%afile
+    with open(afile, 'r') as f:
+        return combiner(f)
+
+
+
+def get_list_tag_by_country(data):
+    """
+    for each contry build list of tag 
+    """
+    data_dict = dict()
+    for line in data:
+        if line.strip():
+            line = line.strip().split('\t')
+            # line contain country tag values
+            if len(line) == 2:
+                # create a dict of list of tag
+                country = line[0]
+                if country in data_dict:
+                    data_dict[country].append(line[1])
+                else: 
+                    data_dict[country] = [line[1]]
+    return data_dict
+
+def combiner(data):
+    data_dict = get_list_tag_by_country(data)
+    return '\n'.join(["\t".join([key, "\t".join(val)]) for key, val in data_dict.items()])
+
+
+if __name__ == "__main__":
+    print(combiner(sys.stdin) )
+    #print(combiner_file("out_mapper_flickr.txt"))
+    
+```
+
+reducer_flickr_with_combiner.py
+
+```python
+#!/usr/bin/env python
+
+import os
+import sys
+import json
+k=4
+def reducer_file(afile):
+    assert(os.path.isfile(afile)), "file %s doesnt exist"%afile
+    with open(afile, 'r') as f:
+        return reducer(f)
+
+
+def get_list_best_tag_by_country (data_dict):
+    """
+    take a list of tag by contry return only k best tags by contry
+    """
+    res_dict = dict()
+    for  country, tags in data_dict.items():
+        # get all tag for contry 
+        lst_tag = list(dict.fromkeys(tags))
+        nb_val_tag = [None] * len(lst_tag)
+        for i in range(len(lst_tag)):
+            nb_val_tag[i]=tags.count(lst_tag[i])
+        sorted_lst_tag = [x for _,x in sorted(zip(nb_val_tag,lst_tag), reverse=True)]
+        #take k first one 
+        res_dict[country] = ' '.join(sorted_lst_tag[:4])
+    return res_dict
+   
+
+def get_list_tag_by_country(data):
+    """
+    for each contry build list of tag 
+    """
+    data_dict = dict()
+    for line in data:
+        if line.strip():
+            line = line.strip().split('\t')
+            # line contain country tag list values
+            if len(line) >= 2:
+                # create a dict of list of tag
+                country = line[0]
+                if country in data_dict:
+                    data_dict[country]= data_dict[country] +line[1:]
+                else: 
+                    data_dict[country] = []+line[1:]
+    return data_dict
+
+def reducer(data):
+    data_dict = get_list_tag_by_country(data)
+    res_dict = get_list_best_tag_by_country(data_dict)
+    return '\n'.join(["\t".join([key, str(val)]) for key, val in res_dict.items()])
+
+
+if __name__ == "__main__":
+    print(reducer(sys.stdin) )
+    #print(reducer_file("out_mapper_flickr.txt"))
+    
+
+```
+
+***Question : la structure de données utilisée dans le reducer contient l’ensemble des tags de l’ensemble
+des pays. Cela peut-il poser un problème pour traiter de grands volumes de données ?***
+
+Effectivement il se peut qu'un tres grand nombre de valeur posent de problème au réducer, puisque celui-ci gère la liste en mémoire.
+En python la taille maximale d'une liste est de 536 870 912 elements sur un système 32 bits, deplus il faut que la RAM soit suffisament grande pour contenit un tel nombre de string.
+
+
+
+

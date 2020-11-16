@@ -18,7 +18,7 @@ def mapper(lines):
     lst=""
     for line in lines:
         line = line.strip().split("\t")
-        print( line)
+        #print( line)
         lst= lst+mapper_line(line)
     return lst.strip()
 
@@ -29,10 +29,10 @@ def mapper_line(line):
         #print ("No country for ",float(line[latitude_field]), float(line[longitude_field]))
         return ""
     for tag in line[tags_field].split(","): 
-        print("Tag : " , tag)
+        #print("Tag : " , tag)
         res+= contry_id+ "\t"+ tag + "\n"
     return  res
 
 if __name__ == "__main__":
-    print (mapper_file("flickrSample.txt") )
-    #print (mapper(sys.stdin) )
+    #print (mapper_file("flickrSample.txt") )
+    print (mapper(sys.stdin) )

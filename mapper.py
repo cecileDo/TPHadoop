@@ -16,7 +16,7 @@ def mapper(lines):
     return lst.strip()
 
 def mapper_line(line):
-    return  ('\t1 \n'.join(line)+'\t1\n')
+    return  ('\t1\n'.join(line)+'\t1\n')
 
 if __name__ == "__main__":
     #print (mapper_file("data.txt") )

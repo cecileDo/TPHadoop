@@ -35,14 +35,14 @@ def get_list_tag_by_country(data):
     for line in data:
         if line.strip():
             line = line.strip().split('\t')
-            # line contain country tag values
-            if len(line) == 2:
+            # line contain country tag list values
+            if len(line) >= 2:
                 # create a dict of list of tag
                 country = line[0]
                 if country in data_dict:
-                    data_dict[country].append(line[1])
+                    data_dict[country]= data_dict[country] +line[1:]
                 else: 
-                    data_dict[country] = [line[1]]
+                    data_dict[country] = []+line[1:]
     return data_dict
 
 def reducer(data):
